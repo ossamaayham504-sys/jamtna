@@ -1,0 +1,37 @@
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const ws = new WebSocket('ws://localhost:8080');
+
+ws.onmessage = event => {
+  const data = JSON.parse(event.data);
+  if(data.type === 'init') {
+    data.messages.forEach(addMessageToDOM);
+  } else if(data.type === 'new') {
+    addMessageToDOM(data.message);
+  }
+};
+
+function addMessageToDOM(msg) {
+  const div = document.createElement('div');
+  div.className = 'message ' + msg.from;
+  div.innerHTML = `<div>${msg.text}</div><div class="time">${new Date(msg.time).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function sendMessage() {
+  const text = input.value.trim();
+  if(!text) return;
+  const msg = { from:'me', text, time:Date.now() };
+  ws.send(JSON.stringify(msg));
+  input.value='';
+}
+
+input.addEventListener('keydown', e => {
+  if(e.key==='Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+</script>
